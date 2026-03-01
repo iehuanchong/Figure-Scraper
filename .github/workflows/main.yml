@@ -2,23 +2,18 @@ name: Provenance Metrics Scraper
 
 on:
   schedule:
-    # 11:55 PM ET = 04:55 UTC (EST) or 03:55 UTC (EDT)
-    # Use 04:55 UTC (covers EST/winter). Adjust to 03:55 in summer if needed.
-    - cron: '55 4 * * *'
-  workflow_dispatch:  # Allow manual trigger from GitHub UI
+    - cron: '55 4 * * *'   # 11:55 PM EST (UTC-5). Change to '55 3 * * *' in EDT summer.
+  workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -28,19 +23,16 @@ jobs:
           playwright install chromium
           playwright install-deps chromium
 
-      - name: Download existing Excel file (if any)
-        continue-on-error: true
-        run: |
-          # Pull the latest Excel file from the repo if it exists
-          git pull origin main
+      - name: Pull latest data
+        run: git pull origin main
 
       - name: Run scraper
         run: python provenance_scraper.py
 
-      - name: Commit and push updated Excel file
+      - name: Commit and push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add provenance_metrics.xlsx
+          git add data.json provenance_metrics.xlsx
           git diff --staged --quiet || git commit -m "Auto: Provenance metrics $(date +'%Y-%m-%d')"
           git push origin main
