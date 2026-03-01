@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "date": "2026-03-01 01:52 AM ET",
+    "loan_amount_funded_1w": "$244.9M",
+    "loans_funded_1w": "2,506",
+    "total_participants": "71,015",
+    "loan_amount_funded_24h": "$0",
+    "loans_funded_24h": "0",
+    "loan_amount_paid_24h": "$879,428",
+    "loans_paid_24h": "202"
+  }
+]
