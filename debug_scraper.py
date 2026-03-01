@@ -1,5 +1,5 @@
 """
-Debug v2 - prints FULL page text with no truncation, loan lines highlighted.
+Debug v3 - writes full page text to files instead of printing (bypasses log truncation).
 """
 import asyncio
 from playwright.async_api import async_playwright
@@ -17,55 +17,62 @@ async def debug():
         print("Loading page (1W default)...")
         await page.goto(URL, wait_until="networkidle", timeout=60000)
         await page.wait_for_timeout(5000)
-
         print(f"Title: {await page.title()}")
 
-        # Print ALL lines - no truncation
-        text = await page.inner_text("body")
-        lines = [l.strip() for l in text.split("\n") if l.strip()]
-        
-        print(f"\nTotal non-empty lines: {len(lines)}")
-        print("\n--- ALL PAGE LINES ---")
-        for i, line in enumerate(lines):
-            print(f"{i:03d}: {line}")
-        print("--- END ALL LINES ---\n")
+        # Write 1W full text to file
+        text_1w = await page.inner_text("body")
+        with open("page_text_1w.txt", "w") as f:
+            f.write(text_1w)
+        print(f"1W page text written ({len(text_1w)} chars)")
 
-        # Specifically highlight loan lines with context
-        print("--- LOAN LINES WITH CONTEXT (±2 lines) ---")
+        # Highlight loan lines to stdout (short enough to not truncate)
+        lines = [l.strip() for l in text_1w.split("\n") if l.strip()]
+        print(f"Total lines: {len(lines)}")
+        print("\n--- 1W LOAN LINES WITH CONTEXT ---")
         for i, line in enumerate(lines):
             if any(k in line.lower() for k in ["loan", "funded", "paid"]):
-                start = max(0, i-2)
-                end = min(len(lines), i+3)
-                print(f"\n  >> Match at line {i}: '{line}'")
+                start, end = max(0, i-2), min(len(lines), i+3)
+                print(f"\n>> Line {i}: '{line}'")
                 for j in range(start, end):
-                    marker = ">>>" if j == i else "   "
-                    print(f"  {marker} [{j}] {lines[j]}")
-        print("--- END ---")
+                    print(f"  {'>>>' if j==i else '   '} [{j}] {repr(lines[j])}")
+        print("--- END 1W ---\n")
 
-        # Now click 24h and repeat
-        print("\n\nClicking 24h tab...")
+        # Click 24h
+        print("Clicking 24h tab...")
         try:
             await page.locator("button.pulse-pill:has-text('24h')").first.click()
             await page.wait_for_timeout(3000)
-            print("Clicked 24h tab successfully")
-            
-            text2 = await page.inner_text("body")
-            lines2 = [l.strip() for l in text2.split("\n") if l.strip()]
-            print("\n--- 24H LOAN LINES WITH CONTEXT ---")
-            for i, line in enumerate(lines2):
-                if any(k in line.lower() for k in ["loan", "funded", "paid"]):
-                    start = max(0, i-2)
-                    end = min(len(lines2), i+3)
-                    print(f"\n  >> Match at line {i}: '{line}'")
-                    for j in range(start, end):
-                        marker = ">>>" if j == i else "   "
-                        print(f"  {marker} [{j}] {lines2[j]}")
-            print("--- END ---")
+            print("Clicked successfully")
         except Exception as e:
-            print(f"Could not click 24h: {e}")
+            print(f"Click failed: {e}")
+            # Try alternate selectors
+            for sel in ["text=24h", "button:has-text('24h')", "[class*='pill']:has-text('24h')"]:
+                try:
+                    await page.locator(sel).first.click(timeout=2000)
+                    print(f"Clicked with fallback: {sel}")
+                    await page.wait_for_timeout(3000)
+                    break
+                except:
+                    print(f"Fallback failed: {sel}")
+
+        # Write 24h full text to file
+        text_24h = await page.inner_text("body")
+        with open("page_text_24h.txt", "w") as f:
+            f.write(text_24h)
+        print(f"24h page text written ({len(text_24h)} chars)")
+
+        print("\n--- 24H LOAN LINES WITH CONTEXT ---")
+        lines2 = [l.strip() for l in text_24h.split("\n") if l.strip()]
+        for i, line in enumerate(lines2):
+            if any(k in line.lower() for k in ["loan", "funded", "paid"]):
+                start, end = max(0, i-2), min(len(lines2), i+3)
+                print(f"\n>> Line {i}: '{line}'")
+                for j in range(start, end):
+                    print(f"  {'>>>' if j==i else '   '} [{j}] {repr(lines2[j])}")
+        print("--- END 24H ---")
 
         await page.screenshot(path="debug_screenshot.png", full_page=True)
-        print("\nScreenshot saved.")
+        print("\nDone. Check artifacts for page_text_1w.txt and page_text_24h.txt")
         await browser.close()
 
 asyncio.run(debug())
