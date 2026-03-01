@@ -1,9 +1,14 @@
 """
 Provenance Blockchain Metrics Scraper
 Scrapes https://provenance.io/pulse for loan metrics and appends to Excel.
-Run daily at 11:55 PM ET via cron or GitHub Actions.
 
-Page defaults to 1W view. Script scrapes 1W first, then clicks 24h tab.
+Key facts from page inspection:
+- Page has TWO tab sections: Hash Metrics (top) and Provenance Blockchain Metrics (bottom)
+- We need the SECOND tab group for blockchain metrics
+- Default tab is 1W — scrape 1W first, then click the second section's 24h tab
+- Labels: "Week's Loan Amount Funded", "Week's Loans Paid"
+- After clicking 24h: labels become "Today's Loan Amount Funded", "Today's Loans Paid"
+- Values are parsed from the plain text by finding the line after the label
 """
 
 import asyncio
@@ -27,20 +32,25 @@ HEADERS = [
 ]
 
 
-async def get_metric_by_label(page, label: str) -> str:
-    """Find a pulse-card-value span by its adjacent label span."""
-    try:
-        # Locate the label span, go up to parent card, then find the value span
-        card = page.locator(f"span:has-text('{label}')").locator("xpath=..").first
-        value = await card.locator("span.pulse-card-value").first.get_attribute("title", timeout=5000)
-        if value:
-            return value.strip()
-        # Fallback: inner text
-        value = await card.locator("span.pulse-card-value").first.inner_text(timeout=5000)
-        return value.strip()
-    except Exception as e:
-        print(f"  WARNING: Could not find '{label}': {e}")
-        return "N/A"
+def extract_from_text(text: str, label: str) -> str:
+    """
+    Parse the plain text body to find the value after a given label.
+    The page text format is:
+        Label
+        i
+        $value
+        delta
+        (pct%)
+        Week/Today
+    So the value is 2 lines after the label (skipping the 'i' tooltip line).
+    """
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
+    for i, line in enumerate(lines):
+        if line == label:
+            # Next non-empty line after label is 'i' (tooltip icon), then the value
+            if i + 2 < len(lines):
+                return lines[i + 2]
+    return "N/A"
 
 
 async def scrape_metrics():
@@ -49,7 +59,8 @@ async def scrape_metrics():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
         page = await context.new_page()
 
@@ -57,22 +68,45 @@ async def scrape_metrics():
         await page.goto(URL, wait_until="networkidle", timeout=60000)
         await page.wait_for_timeout(4000)
 
-        # --- Page defaults to 1W — scrape 1W first ---
+        # --- Scrape 1W (default view) ---
         print("Scraping 1W metrics...")
-        metrics["1w_loan_amount_funded"] = await get_metric_by_label(page, "Week's Loan Amount Funded")
-        metrics["1w_loans_paid"] = await get_metric_by_label(page, "Week's Loans Paid")
+        text_1w = await page.inner_text("body")
+        metrics["1w_loan_amount_funded"] = extract_from_text(text_1w, "Week's Loan Amount Funded")
+        metrics["1w_loans_paid"] = extract_from_text(text_1w, "Week's Loans Paid")
         print(f"  1W Loan Amount Funded: {metrics['1w_loan_amount_funded']}")
         print(f"  1W Loans Paid: {metrics['1w_loans_paid']}")
 
-        # --- Click the 24h tab ---
-        print("Clicking 24h tab...")
-        await page.locator("button.pulse-pill:has-text('24h')").first.click()
-        await page.wait_for_timeout(3000)
+        # --- Click the SECOND section's 24h tab ---
+        # The page has two tab groups; we need the second one (index 1)
+        # Both tab groups have buttons with text '24h' — use nth(1) for the second
+        print("Clicking 24h tab (second tab group)...")
+        try:
+            tab_buttons = page.locator("button.pulse-pill:has-text('24h')")
+            count = await tab_buttons.count()
+            print(f"  Found {count} '24h' tab button(s)")
+            if count >= 2:
+                await tab_buttons.nth(1).click()
+            else:
+                await tab_buttons.first.click()
+            await page.wait_for_timeout(3000)
+            print("  Clicked successfully")
+        except Exception as e:
+            print(f"  pulse-pill click failed: {e}, trying fallback...")
+            try:
+                # Fallback: find the Provenance Blockchain Metrics section header,
+                # then click the 24h button within that section
+                section = page.locator("text=Provenance Blockchain Metrics").locator("xpath=../..").first
+                await section.locator("button:has-text('24h')").first.click()
+                await page.wait_for_timeout(3000)
+                print("  Fallback click succeeded")
+            except Exception as e2:
+                print(f"  Fallback also failed: {e2}")
 
         # --- Scrape 24h ---
         print("Scraping 24h metrics...")
-        metrics["24h_loan_amount_funded"] = await get_metric_by_label(page, "Today's Loan Amount Funded")
-        metrics["24h_loans_paid"] = await get_metric_by_label(page, "Today's Loans Paid")
+        text_24h = await page.inner_text("body")
+        metrics["24h_loan_amount_funded"] = extract_from_text(text_24h, "Today's Loan Amount Funded")
+        metrics["24h_loans_paid"] = extract_from_text(text_24h, "Today's Loans Paid")
         print(f"  24h Loan Amount Funded: {metrics['24h_loan_amount_funded']}")
         print(f"  24h Loans Paid: {metrics['24h_loans_paid']}")
 
@@ -108,7 +142,6 @@ def setup_workbook():
 
     ws.row_dimensions[1].height = 30
     ws.freeze_panes = "A2"
-
     wb.save(EXCEL_FILE)
     print(f"Created new workbook: {EXCEL_FILE}")
 
