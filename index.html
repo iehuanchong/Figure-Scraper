@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Provenance Blockchain — Loan Metrics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --surface: #0e1419;
+    --surface2: #141c24;
+    --border: #1e2d3d;
+    --accent: #00d4ff;
+    --accent2: #7b61ff;
+    --accent3: #00ff9d;
+    --text: #e8f4f8;
+    --muted: #4a6278;
+    --muted2: #2a3d4f;
+    --danger: #ff4d6d;
+    --warn: #ffb347;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 40px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 20px var(--accent);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 20px var(--accent); }
+    50% { opacity: 0.4; box-shadow: 0 0 8px var(--accent); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .last-updated {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .last-updated strong {
+    color: var(--accent3);
+  }
+
+  /* Period Selector */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+
+  .period-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .period-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+  }
+
+  .period-tab {
+    padding: 8px 24px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .period-tab:hover {
+    color: var(--text);
+    background: var(--surface2);
+  }
+
+  .period-tab.active {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 500;
+  }
+
+  /* Summary KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .kpi-card.c1::before { background: linear-gradient(90deg, var(--accent), transparent); }
+  .kpi-card.c2::before { background: linear-gradient(90deg, var(--accent2), transparent); }
+  .kpi-card.c3::before { background: linear-gradient(90deg, var(--accent3), transparent); }
+  .kpi-card.c4::before { background: linear-gradient(90deg, var(--warn), transparent); }
+  .kpi-card.c5::before { background: linear-gradient(90deg, var(--danger), transparent); }
+  .kpi-card.c6::before { background: linear-gradient(90deg, #ff9ef5, transparent); }
+  .kpi-card.c7::before { background: linear-gradient(90deg, #ffd700, transparent); }
+
+  .kpi-card:hover {
+    border-color: var(--muted2);
+    transform: translateY(-2px);
+  }
+
+  .kpi-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .kpi-sub {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* Chart Section */
+  .chart-section {
+    margin-bottom: 48px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .metric-toggle {
+    display: flex;
+    gap: 4px;
+  }
+
+  .metric-btn {
+    padding: 5px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .metric-btn:hover { color: var(--text); border-color: var(--muted2); }
+  .metric-btn.active { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+  /* Canvas chart wrapper */
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+  }
+
+  canvas { display: block; }
+
+  /* Data Table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 60px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 14px 16px;
+    text-align: right;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  th:first-child { text-align: left; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  td {
+    padding: 12px 16px;
+    text-align: right;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  td:first-child {
+    text-align: left;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .val-money { color: var(--accent); }
+  .val-count { color: var(--accent3); }
+  .val-na { color: var(--muted2); }
+
+  /* Loading / error states */
+  .state-msg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px;
+    gap: 16px;
+    color: var(--muted);
+  }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg { color: var(--danger); font-size: 13px; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    text-align: center;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .container { padding: 0 16px; }
+    h1 { font-size: 20px; }
+    .kpi-value { font-size: 20px; }
+    .header-inner { flex-direction: column; align-items: flex-start; }
+    .last-updated { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo-area">
+        <div class="logo-dot"></div>
+        <div>
+          <h1>Provenance <span>Loan Metrics</span></h1>
+          <div class="subtitle">Blockchain Activity Dashboard</div>
+        </div>
+      </div>
+      <div class="last-updated" id="lastUpdated">Loading...</div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <span class="period-label">View period</span>
+    <div class="period-tabs">
+      <button class="period-tab active" data-period="daily">Daily</button>
+      <button class="period-tab" data-period="weekly">Weekly</button>
+      <button class="period-tab" data-period="mtd">Month-to-Date</button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="state-msg"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Chart: Loan Amount Funded -->
+  <div class="chart-section">
+    <div class="section-header">
+      <div class="section-title">Loan Amount Funded</div>
+      <div class="metric-toggle">
+        <button class="metric-btn active" data-chart="funded_amount" data-view="24h">24h</button>
+        <button class="metric-btn" data-chart="funded_amount" data-view="1w">1W</button>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chartFundedAmount" height="90"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart: Loans Count -->
+  <div class="chart-section">
+    <div class="section-header">
+      <div class="section-title">Loans Funded &amp; Paid (Count)</div>
+      <div class="metric-toggle">
+        <button class="metric-btn active" data-chart="loan_counts" data-view="24h">24h</button>
+        <button class="metric-btn" data-chart="loan_counts" data-view="1w">1W</button>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chartLoanCounts" height="90"></canvas>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="section-header">
+    <div class="section-title">Raw Data</div>
+  </div>
+  <div class="table-wrap">
+    <div id="tableContainer"><div class="state-msg"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<footer>
+  Data scraped from provenance.io/pulse · Updated daily at 11:55 PM ET · Auto-deployed via GitHub Actions
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ─── Config ──────────────────────────────────────────────────────────────────
+const DATA_URL = './data.json';
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let allData = [];
+let currentPeriod = 'daily';
+let chartViews = { funded_amount: '24h', loan_counts: '24h' };
+let charts = {};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function parseVal(v) {
+  if (!v || v === 'N/A') return null;
+  const s = String(v).replace(/[$,\s]/g, '');
+  if (s.endsWith('B')) return parseFloat(s) * 1e9;
+  if (s.endsWith('M')) return parseFloat(s) * 1e6;
+  if (s.endsWith('K')) return parseFloat(s) * 1e3;
+  return parseFloat(s) || null;
+}
+
+function fmtMoney(n) {
+  if (n === null || isNaN(n)) return '—';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K';
+  return '$' + n.toFixed(0);
+}
+
+function fmtCount(n) {
+  if (n === null || isNaN(n)) return '—';
+  return n.toLocaleString();
+}
+
+function parseDate(dateStr) {
+  // Format: "2026-03-01 11:55 PM ET"
+  return new Date(dateStr.split(' ').slice(0,2).join('T'));
+}
+
+// ─── Filter by period ────────────────────────────────────────────────────────
+function filterData(data, period) {
+  if (!data.length) return data;
+  const sorted = [...data].sort((a,b) => parseDate(a.date) - parseDate(b.date));
+  const latest = parseDate(sorted[sorted.length-1].date);
+
+  if (period === 'daily') {
+    // Last 30 individual days
+    return sorted.slice(-30);
+  }
+  if (period === 'weekly') {
+    // Group by ISO week, sum values
+    const weeks = {};
+    sorted.forEach(row => {
+      const d = parseDate(row.date);
+      const startOfWeek = new Date(d);
+      startOfWeek.setDate(d.getDate() - d.getDay());
+      const key = startOfWeek.toISOString().slice(0,10);
+      if (!weeks[key]) weeks[key] = { date: 'Wk ' + key, _rows: [] };
+      weeks[key]._rows.push(row);
+    });
+    return Object.values(weeks).map(w => aggregateRows(w._rows, w.date)).slice(-12);
+  }
+  if (period === 'mtd') {
+    // Group by month, sum values
+    const months = {};
+    sorted.forEach(row => {
+      const key = parseDate(row.date).toISOString().slice(0,7);
+      if (!months[key]) months[key] = { date: key, _rows: [] };
+      months[key]._rows.push(row);
+    });
+    return Object.values(months).map(m => aggregateRows(m._rows, m.date)).slice(-12);
+  }
+  return sorted;
+}
+
+function aggregateRows(rows, dateLabel) {
+  const fields = [
+    'loan_amount_funded_24h','loans_funded_24h',
+    'loan_amount_funded_1w','loans_funded_1w',
+    'loan_amount_paid_24h','loans_paid_24h',
+    'total_participants'
+  ];
+  const result = { date: dateLabel };
+  fields.forEach(f => {
+    const vals = rows.map(r => parseVal(r[f])).filter(v => v !== null);
+    result[f] = vals.length ? vals.reduce((a,b) => a+b, 0) : null;
+  });
+  return result;
+}
+
+// ─── KPI Cards ───────────────────────────────────────────────────────────────
+function renderKPIs(filtered) {
+  const grid = document.getElementById('kpiGrid');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="state-msg"><span>No data available</span></div>';
+    return;
+  }
+
+  // Sum all rows in filtered set
+  const agg = aggregateRows(filtered, '');
+  const periodLabel = { daily: 'last 30 days', weekly: 'by week', mtd: 'by month' }[currentPeriod];
+
+  const cards = [
+    { label: "Loan Amt Funded (24h)", val: fmtMoney(agg.loan_amount_funded_24h), cls: 'c1', sub: '24h view' },
+    { label: "Loans Funded (24h)", val: fmtCount(agg.loans_funded_24h), cls: 'c2', sub: '24h count' },
+    { label: "Loan Amt Funded (1W)", val: fmtMoney(agg.loan_amount_funded_1w), cls: 'c3', sub: '1W view' },
+    { label: "Loans Funded (1W)", val: fmtCount(agg.loans_funded_1w), cls: 'c4', sub: '1W count' },
+    { label: "Loan Amt Paid (24h)", val: fmtMoney(agg.loan_amount_paid_24h), cls: 'c5', sub: '24h view' },
+    { label: "Loans Paid (24h)", val: fmtCount(agg.loans_paid_24h), cls: 'c6', sub: '24h count' },
+    { label: "Total Participants", val: fmtCount(agg.total_participants), cls: 'c7', sub: 'cumulative' },
+  ];
+
+  grid.innerHTML = cards.map(c => `
+    <div class="kpi-card ${c.cls}">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value">${c.val}</div>
+      <div class="kpi-sub">${periodLabel} · ${c.sub}</div>
+    </div>
+  `).join('');
+}
+
+// ─── Charts ──────────────────────────────────────────────────────────────────
+const CHART_STYLE = {
+  borderWidth: 2,
+  pointRadius: 3,
+  pointHoverRadius: 6,
+  tension: 0.35,
+  fill: true,
+};
+
+function makeGradient(ctx, color) {
+  const g = ctx.createLinearGradient(0, 0, 0, 300);
+  g.addColorStop(0, color + '33');
+  g.addColorStop(1, color + '00');
+  return g;
+}
+
+function renderChart(id, labels, datasets) {
+  const canvas = document.getElementById(id);
+  if (charts[id]) charts[id].destroy();
+  const ctx = canvas.getContext('2d');
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: {
+            color: '#4a6278',
+            font: { family: 'DM Mono', size: 11 },
+            boxWidth: 12,
+          }
+        },
+        tooltip: {
+          backgroundColor: '#0e1419',
+          borderColor: '#1e2d3d',
+          borderWidth: 1,
+          titleColor: '#e8f4f8',
+          bodyColor: '#4a6278',
+          titleFont: { family: 'Syne', size: 12 },
+          bodyFont: { family: 'DM Mono', size: 11 },
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#4a6278', font: { family: 'DM Mono', size: 10 }, maxRotation: 45 },
+          grid: { color: '#1e2d3d' }
+        },
+        y: {
+          ticks: { color: '#4a6278', font: { family: 'DM Mono', size: 10 },
+            callback: v => v >= 1e9 ? '$'+(v/1e9).toFixed(1)+'B' : v >= 1e6 ? '$'+(v/1e6).toFixed(1)+'M' : v >= 1e3 ? '$'+(v/1e3).toFixed(0)+'K' : v
+          },
+          grid: { color: '#1e2d3d' }
+        }
+      }
+    }
+  });
+}
+
+function renderCharts(filtered) {
+  const labels = filtered.map(r => {
+    const d = r.date;
+    if (d.startsWith('Wk ') || d.match(/^\d{4}-\d{2}$/)) return d;
+    return d.slice(5,10); // MM-DD
+  });
+
+  // Chart 1: Loan Amount Funded
+  const view1 = chartViews.funded_amount;
+  const field1 = view1 === '24h' ? 'loan_amount_funded_24h' : 'loan_amount_funded_1w';
+  const color1 = '#00d4ff';
+  const vals1 = filtered.map(r => parseVal(r[field1]));
+  const ctx1 = document.getElementById('chartFundedAmount').getContext('2d');
+  renderChart('chartFundedAmount', labels, [{
+    label: `Loan Amount Funded (${view1})`,
+    data: vals1,
+    borderColor: color1,
+    backgroundColor: makeGradient(ctx1, color1),
+    ...CHART_STYLE
+  }]);
+
+  // Chart 2: Loans Funded + Loans Paid counts
+  const view2 = chartViews.loan_counts;
+  const fField = view2 === '24h' ? 'loans_funded_24h' : 'loans_funded_1w';
+  const pField = view2 === '24h' ? 'loans_paid_24h' : 'loans_paid_24h';
+  const ctx2 = document.getElementById('chartLoanCounts').getContext('2d');
+  renderChart('chartLoanCounts', labels, [
+    {
+      label: `Loans Funded (${view2})`,
+      data: filtered.map(r => parseVal(r[fField])),
+      borderColor: '#7b61ff',
+      backgroundColor: makeGradient(ctx2, '#7b61ff'),
+      ...CHART_STYLE
+    },
+    {
+      label: `Loans Paid (24h)`,
+      data: filtered.map(r => parseVal(r[pField])),
+      borderColor: '#00ff9d',
+      backgroundColor: makeGradient(ctx2, '#00ff9d'),
+      ...CHART_STYLE
+    }
+  ]);
+}
+
+// ─── Table ───────────────────────────────────────────────────────────────────
+function renderTable(filtered) {
+  const container = document.getElementById('tableContainer');
+  if (!filtered.length) {
+    container.innerHTML = '<div class="state-msg"><span>No data</span></div>';
+    return;
+  }
+
+  const rows = [...filtered].reverse();
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Loan Amt Funded (24h)</th>
+          <th>Loans Funded (24h)</th>
+          <th>Loan Amt Funded (1W)</th>
+          <th>Loans Funded (1W)</th>
+          <th>Loan Amt Paid (24h)</th>
+          <th>Loans Paid (24h)</th>
+          <th>Total Participants</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => {
+          const cls = v => v === null ? 'val-na' : typeof v === 'string' && v.startsWith('$') ? 'val-money' : 'val-count';
+          const d = (f, fmt) => {
+            const v = parseVal(r[f]);
+            if (v === null) return '<span class="val-na">—</span>';
+            return `<span class="${cls(v)}">${fmt(v)}</span>`;
+          };
+          return `<tr>
+            <td>${r.date}</td>
+            <td>${d('loan_amount_funded_24h', fmtMoney)}</td>
+            <td>${d('loans_funded_24h', fmtCount)}</td>
+            <td>${d('loan_amount_funded_1w', fmtMoney)}</td>
+            <td>${d('loans_funded_1w', fmtCount)}</td>
+            <td>${d('loan_amount_paid_24h', fmtMoney)}</td>
+            <td>${d('loans_paid_24h', fmtCount)}</td>
+            <td>${d('total_participants', fmtCount)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ─── Main render ─────────────────────────────────────────────────────────────
+function render() {
+  const filtered = filterData(allData, currentPeriod);
+  renderKPIs(filtered);
+  renderCharts(filtered);
+  renderTable(filtered);
+}
+
+// ─── Event listeners ─────────────────────────────────────────────────────────
+document.querySelectorAll('.period-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPeriod = btn.dataset.period;
+    render();
+  });
+});
+
+document.querySelectorAll('.metric-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const chart = btn.dataset.chart;
+    document.querySelectorAll(`.metric-btn[data-chart="${chart}"]`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    chartViews[chart] = btn.dataset.view;
+    const filtered = filterData(allData, currentPeriod);
+    renderCharts(filtered);
+  });
+});
+
+// ─── Load data ───────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const res = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    allData = await res.json();
+
+    if (allData.length) {
+      const latest = [...allData].sort((a,b) => parseDate(b.date) - parseDate(a.date))[0];
+      document.getElementById('lastUpdated').innerHTML =
+        `Last updated<br><strong>${latest.date}</strong>`;
+    }
+    render();
+  } catch(e) {
+    document.getElementById('kpiGrid').innerHTML =
+      `<div class="state-msg"><span class="error-msg">Failed to load data.json<br>${e.message}</span></div>`;
+    document.getElementById('tableContainer').innerHTML =
+      `<div class="state-msg"><span class="error-msg">No data available</span></div>`;
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
