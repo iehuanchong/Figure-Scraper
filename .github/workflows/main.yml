@@ -2,7 +2,7 @@ name: Provenance Metrics Scraper
 
 on:
   schedule:
-    - cron: '20 3 * * *'   # 11:20 PM ET (EDT / UTC-4). Change to '20 4 * * *' when DST ends (EST).
+    - cron: '10 3 * * *'   # 11:10 PM ET (EDT / UTC-4). Change to '10 4 * * *' when DST ends (EST).
   workflow_dispatch:
 
 jobs:
