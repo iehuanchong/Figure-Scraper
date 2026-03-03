@@ -2,23 +2,27 @@ name: Provenance Metrics Scraper
 
 on:
   schedule:
-    - cron: '55 4 * * *'   # 11:55 PM EST (UTC-5). Change to '55 3 * * *' in EDT summer.
+    - cron: '20 3 * * *'   # 11:20 PM ET (EDT / UTC-4). Change to '20 4 * * *' when DST ends (EST).
   workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install playwright openpyxl pytz
           playwright install chromium
           playwright install-deps chromium
@@ -29,7 +33,7 @@ jobs:
       - name: Run scraper
         run: python provenance_scraper.py
 
-      - name: Commit and push
+      - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
