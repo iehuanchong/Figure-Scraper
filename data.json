@@ -438,5 +438,15 @@
     "loans_funded_24h": "409",
     "loan_amount_paid_24h": "$538,022",
     "loans_paid_24h": "170"
+  },
+  {
+    "date": "2026-04-12 01:54 AM ET",
+    "loan_amount_funded_1w": "$269.91M",
+    "loans_funded_1w": "2,854",
+    "total_participants": "73,799",
+    "loan_amount_funded_24h": "$0",
+    "loans_funded_24h": "0",
+    "loan_amount_paid_24h": "$578,544",
+    "loans_paid_24h": "80"
   }
 ]
