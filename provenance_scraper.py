@@ -51,10 +51,10 @@ TABS = [
     {
         "prefix":         "3m",
         "btn":            "3m",
-        "funded_label":   "Quarter's Loan Amount Funded",
-        "funded_ct":      "Quarter's Loans Funded",
-        "paid_label":     "Quarter's Loan Amount Paid",
-        "paid_ct":        "Quarter's Loans Paid",
+        "funded_label":   "3 Months Loan Amount Funded",
+        "funded_ct":      "3 Months Loans Funded",
+        "paid_label":     "3 Months Loan Amount Paid",
+        "paid_ct":        "3 Months Loans Paid",
     },
 ]
 
