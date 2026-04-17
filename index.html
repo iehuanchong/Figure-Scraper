@@ -19,6 +19,8 @@
     --muted2: #2a3d4f;
     --danger: #ff4d6d;
     --warn: #ffb347;
+    --pink: #ff9ef5;
+    --gold: #ffd700;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,7 +33,6 @@
     overflow-x: hidden;
   }
 
-  /* Grid background */
   body::before {
     content: '';
     position: fixed;
@@ -52,7 +53,7 @@
     z-index: 1;
   }
 
-  /* Header */
+  /* ── Header ── */
   header {
     padding: 40px 0 32px;
     border-bottom: 1px solid var(--border);
@@ -67,15 +68,10 @@
     flex-wrap: wrap;
   }
 
-  .logo-area {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+  .logo-area { display: flex; align-items: center; gap: 16px; }
 
   .logo-dot {
-    width: 12px;
-    height: 12px;
+    width: 12px; height: 12px;
     border-radius: 50%;
     background: var(--accent);
     box-shadow: 0 0 20px var(--accent);
@@ -83,8 +79,8 @@
   }
 
   @keyframes pulse-dot {
-    0%, 100% { opacity: 1; box-shadow: 0 0 20px var(--accent); }
-    50% { opacity: 0.4; box-shadow: 0 0 8px var(--accent); }
+    0%,100% { opacity:1; box-shadow: 0 0 20px var(--accent); }
+    50%      { opacity:.4; box-shadow: 0 0 8px var(--accent); }
   }
 
   h1 {
@@ -92,12 +88,8 @@
     font-size: 28px;
     font-weight: 800;
     letter-spacing: -0.5px;
-    color: var(--text);
   }
-
-  h1 span {
-    color: var(--accent);
-  }
+  h1 span { color: var(--accent); }
 
   .subtitle {
     font-size: 11px;
@@ -107,21 +99,14 @@
     margin-top: 4px;
   }
 
-  .last-updated {
-    font-size: 11px;
-    color: var(--muted);
-    text-align: right;
-  }
+  .last-updated { font-size: 11px; color: var(--muted); text-align: right; }
+  .last-updated strong { color: var(--accent3); }
 
-  .last-updated strong {
-    color: var(--accent3);
-  }
-
-  /* Period Selector */
-  .controls {
+  /* ── Period Tabs ── */
+  .period-bar {
     display: flex;
     align-items: center;
-    gap: 32px;
+    gap: 16px;
     margin-bottom: 40px;
     flex-wrap: wrap;
   }
@@ -143,23 +128,20 @@
   }
 
   .period-tab {
-    padding: 8px 24px;
+    padding: 8px 28px;
     border-radius: 6px;
     border: none;
     background: transparent;
     color: var(--muted);
     font-family: 'DM Mono', monospace;
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 500;
     letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
+    transition: all 0.18s;
   }
 
-  .period-tab:hover {
-    color: var(--text);
-    background: var(--surface2);
-  }
+  .period-tab:hover { color: var(--text); background: var(--surface2); }
 
   .period-tab.active {
     background: var(--accent);
@@ -167,7 +149,11 @@
     font-weight: 500;
   }
 
-  /* Summary KPI Cards */
+  .period-tab[data-period="1w"].active  { background: var(--accent2); }
+  .period-tab[data-period="1m"].active  { background: var(--accent3); color: #080c10; }
+  .period-tab[data-period="3m"].active  { background: var(--gold);    color: #080c10; }
+
+  /* ── KPI Cards ── */
   .kpi-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -197,13 +183,8 @@
   .kpi-card.c3::before { background: linear-gradient(90deg, var(--accent3), transparent); }
   .kpi-card.c4::before { background: linear-gradient(90deg, var(--warn), transparent); }
   .kpi-card.c5::before { background: linear-gradient(90deg, var(--danger), transparent); }
-  .kpi-card.c6::before { background: linear-gradient(90deg, #ff9ef5, transparent); }
-  .kpi-card.c7::before { background: linear-gradient(90deg, #ffd700, transparent); }
 
-  .kpi-card:hover {
-    border-color: var(--muted2);
-    transform: translateY(-2px);
-  }
+  .kpi-card:hover { border-color: var(--muted2); transform: translateY(-2px); }
 
   .kpi-label {
     font-size: 10px;
@@ -222,15 +203,12 @@
     margin-bottom: 8px;
   }
 
-  .kpi-sub {
-    font-size: 10px;
-    color: var(--muted);
-  }
+  .kpi-value.na { color: var(--muted2); font-size: 18px; }
 
-  /* Chart Section */
-  .chart-section {
-    margin-bottom: 48px;
-  }
+  .kpi-sub { font-size: 10px; color: var(--muted); }
+
+  /* ── Chart Section ── */
+  .chart-section { margin-bottom: 48px; }
 
   .section-header {
     display: flex;
@@ -245,7 +223,6 @@
     font-family: 'Syne', sans-serif;
     font-size: 16px;
     font-weight: 700;
-    color: var(--text);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -254,63 +231,32 @@
   .section-title::before {
     content: '';
     display: inline-block;
-    width: 4px;
-    height: 18px;
+    width: 4px; height: 18px;
     background: var(--accent);
     border-radius: 2px;
   }
 
-  .metric-toggle {
-    display: flex;
-    gap: 4px;
-  }
-
-  .metric-btn {
-    padding: 5px 14px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .metric-btn:hover { color: var(--text); border-color: var(--muted2); }
-  .metric-btn.active { background: var(--surface2); color: var(--text); border-color: var(--accent); }
-
-  /* Canvas chart wrapper */
   .chart-wrap {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 24px;
-    position: relative;
   }
 
   canvas { display: block; }
 
-  /* Data Table */
+  /* ── Table ── */
   .table-wrap {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
-    overflow: hidden;
+    overflow: auto;
     margin-bottom: 60px;
   }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 700px; }
 
-  thead {
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-  }
+  thead { background: var(--surface2); border-bottom: 1px solid var(--border); }
 
   th {
     padding: 14px 16px;
@@ -321,35 +267,20 @@
     color: var(--muted);
     white-space: nowrap;
   }
-
   th:first-child { text-align: left; }
 
-  tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-  }
-
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--surface2); }
 
-  td {
-    padding: 12px 16px;
-    text-align: right;
-    color: var(--text);
-    white-space: nowrap;
-  }
+  td { padding: 12px 16px; text-align: right; white-space: nowrap; }
+  td:first-child { text-align: left; color: var(--muted); font-size: 11px; }
 
-  td:first-child {
-    text-align: left;
-    color: var(--muted);
-    font-size: 11px;
-  }
+  .val-money  { color: var(--accent); }
+  .val-count  { color: var(--accent3); }
+  .val-na     { color: var(--muted2); }
 
-  .val-money { color: var(--accent); }
-  .val-count { color: var(--accent3); }
-  .val-na { color: var(--muted2); }
-
-  /* Loading / error states */
+  /* ── States ── */
   .state-msg {
     display: flex;
     flex-direction: column;
@@ -369,10 +300,8 @@
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg { color: var(--danger); font-size: 13px; text-align: center; }
 
-  .error-msg { color: var(--danger); font-size: 13px; }
-
-  /* Footer */
   footer {
     border-top: 1px solid var(--border);
     padding: 24px 0;
@@ -382,19 +311,19 @@
     letter-spacing: 1px;
   }
 
-  /* Responsive */
   @media (max-width: 700px) {
     .container { padding: 0 16px; }
     h1 { font-size: 20px; }
     .kpi-value { font-size: 20px; }
     .header-inner { flex-direction: column; align-items: flex-start; }
     .last-updated { text-align: left; }
+    .period-tab { padding: 8px 16px; font-size: 12px; }
   }
 </style>
 </head>
 <body>
-
 <div class="container">
+
   <header>
     <div class="header-inner">
       <div class="logo-area">
@@ -408,12 +337,14 @@
     </div>
   </header>
 
-  <div class="controls">
-    <span class="period-label">View period</span>
+  <!-- Period Selector -->
+  <div class="period-bar">
+    <span class="period-label">View as reported by</span>
     <div class="period-tabs">
-      <button class="period-tab active" data-period="daily">Daily</button>
-      <button class="period-tab" data-period="weekly">Weekly</button>
-      <button class="period-tab" data-period="mtd">Month-to-Date</button>
+      <button class="period-tab active" data-period="24h">1D</button>
+      <button class="period-tab"        data-period="1w">1W</button>
+      <button class="period-tab"        data-period="1m">1M</button>
+      <button class="period-tab"        data-period="3m">3M</button>
     </div>
   </div>
 
@@ -426,37 +357,40 @@
   <div class="chart-section">
     <div class="section-header">
       <div class="section-title">Loan Amount Funded</div>
-      <div class="metric-toggle">
-        <button class="metric-btn active" data-chart="funded_amount" data-view="24h">24h</button>
-        <button class="metric-btn" data-chart="funded_amount" data-view="1w">1W</button>
-      </div>
     </div>
     <div class="chart-wrap">
-      <canvas id="chartFundedAmount" height="90"></canvas>
+      <canvas id="chartFunded" height="90"></canvas>
     </div>
   </div>
 
-  <!-- Chart: Loans Count -->
+  <!-- Chart: Loan Amount Paid -->
+  <div class="chart-section">
+    <div class="section-header">
+      <div class="section-title">Loan Amount Paid</div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chartPaid" height="90"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart: Loan Counts -->
   <div class="chart-section">
     <div class="section-header">
       <div class="section-title">Loans Funded &amp; Paid (Count)</div>
-      <div class="metric-toggle">
-        <button class="metric-btn active" data-chart="loan_counts" data-view="24h">24h</button>
-        <button class="metric-btn" data-chart="loan_counts" data-view="1w">1W</button>
-      </div>
     </div>
     <div class="chart-wrap">
-      <canvas id="chartLoanCounts" height="90"></canvas>
+      <canvas id="chartCounts" height="90"></canvas>
     </div>
   </div>
 
-  <!-- Data Table -->
+  <!-- Table -->
   <div class="section-header">
     <div class="section-title">Raw Data</div>
   </div>
   <div class="table-wrap">
     <div id="tableContainer"><div class="state-msg"><div class="spinner"></div></div></div>
   </div>
+
 </div>
 
 <footer>
@@ -465,16 +399,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// ─── Config ──────────────────────────────────────────────────────────────────
 const DATA_URL = './data.json';
 
-// ─── State ───────────────────────────────────────────────────────────────────
-let allData = [];
-let currentPeriod = 'daily';
-let chartViews = { funded_amount: '24h', loan_counts: '24h' };
-let charts = {};
+let allData    = [];
+let currentPeriod = '24h';
+let charts     = {};
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
 function parseVal(v) {
   if (!v || v === 'N/A') return null;
   const s = String(v).replace(/[$,\s]/g, '');
@@ -494,98 +426,70 @@ function fmtMoney(n) {
 
 function fmtCount(n) {
   if (n === null || isNaN(n)) return '—';
-  return n.toLocaleString();
+  return Math.round(n).toLocaleString();
 }
 
-function parseDate(dateStr) {
-  // Format: "2026-03-01 11:55 PM ET"
-  return new Date(dateStr.split(' ').slice(0,2).join('T'));
+function parseDate(s) {
+  return new Date(s.split(' ').slice(0,2).join('T'));
 }
 
-// ─── Filter by period ────────────────────────────────────────────────────────
-function filterData(data, period) {
-  if (!data.length) return data;
-  const sorted = [...data].sort((a,b) => parseDate(a.date) - parseDate(b.date));
-  const latest = parseDate(sorted[sorted.length-1].date);
-
-  if (period === 'daily') {
-    // Last 30 individual days
-    return sorted.slice(-30);
-  }
-  if (period === 'weekly') {
-    // Group by ISO week, sum values
-    const weeks = {};
-    sorted.forEach(row => {
-      const d = parseDate(row.date);
-      const startOfWeek = new Date(d);
-      startOfWeek.setDate(d.getDate() - d.getDay());
-      const key = startOfWeek.toISOString().slice(0,10);
-      if (!weeks[key]) weeks[key] = { date: 'Wk ' + key, _rows: [] };
-      weeks[key]._rows.push(row);
-    });
-    return Object.values(weeks).map(w => aggregateRows(w._rows, w.date)).slice(-12);
-  }
-  if (period === 'mtd') {
-    // Group by month, sum values
-    const months = {};
-    sorted.forEach(row => {
-      const key = parseDate(row.date).toISOString().slice(0,7);
-      if (!months[key]) months[key] = { date: key, _rows: [] };
-      months[key]._rows.push(row);
-    });
-    return Object.values(months).map(m => aggregateRows(m._rows, m.date)).slice(-12);
-  }
-  return sorted;
+function shortDate(s) {
+  // "2026-03-01 11:55 PM ET" → "03-01"
+  return s.slice(5, 10);
 }
 
-function aggregateRows(rows, dateLabel) {
-  const fields = [
-    'loan_amount_funded_24h','loans_funded_24h',
-    'loan_amount_funded_1w','loans_funded_1w',
-    'loan_amount_paid_24h','loans_paid_24h',
-    'total_participants'
-  ];
-  const result = { date: dateLabel };
-  fields.forEach(f => {
-    const vals = rows.map(r => parseVal(r[f])).filter(v => v !== null);
-    result[f] = vals.length ? vals.reduce((a,b) => a+b, 0) : null;
-  });
-  return result;
+function getSuffix(period) {
+  return `_${period}`;
 }
 
-// ─── KPI Cards ───────────────────────────────────────────────────────────────
-function renderKPIs(filtered) {
-  const grid = document.getElementById('kpiGrid');
-  if (!filtered.length) {
+// ── Latest row for KPIs ───────────────────────────────────────────────────────
+
+function getLatest() {
+  if (!allData.length) return null;
+  return [...allData].sort((a,b) => parseDate(b.date) - parseDate(a.date))[0];
+}
+
+// ── KPI Cards ─────────────────────────────────────────────────────────────────
+
+function renderKPIs() {
+  const grid   = document.getElementById('kpiGrid');
+  const latest = getLatest();
+
+  if (!latest) {
     grid.innerHTML = '<div class="state-msg"><span>No data available</span></div>';
     return;
   }
 
-  // Sum all rows in filtered set
-  const agg = aggregateRows(filtered, '');
-  const periodLabel = { daily: 'last 30 days', weekly: 'by week', mtd: 'by month' }[currentPeriod];
+  const p = currentPeriod;
+  const periodNames = { '24h': '24-Hour', '1w': '1-Week', '1m': '1-Month', '3m': '3-Month' };
+
+  const raw = (key) => latest[key] || 'N/A';
+  const num = (key) => parseVal(latest[key]);
 
   const cards = [
-    { label: "Loan Amt Funded (24h)", val: fmtMoney(agg.loan_amount_funded_24h), cls: 'c1', sub: '24h view' },
-    { label: "Loans Funded (24h)", val: fmtCount(agg.loans_funded_24h), cls: 'c2', sub: '24h count' },
-    { label: "Loan Amt Funded (1W)", val: fmtMoney(agg.loan_amount_funded_1w), cls: 'c3', sub: '1W view' },
-    { label: "Loans Funded (1W)", val: fmtCount(agg.loans_funded_1w), cls: 'c4', sub: '1W count' },
-    { label: "Loan Amt Paid (24h)", val: fmtMoney(agg.loan_amount_paid_24h), cls: 'c5', sub: '24h view' },
-    { label: "Loans Paid (24h)", val: fmtCount(agg.loans_paid_24h), cls: 'c6', sub: '24h count' },
-    { label: "Total Participants", val: fmtCount(agg.total_participants), cls: 'c7', sub: 'cumulative' },
+    { label: 'Loan Amt Funded',   key: `loan_amount_funded_${p}`, fmt: fmtMoney, cls: 'c1' },
+    { label: 'Loans Funded',      key: `loans_funded_${p}`,       fmt: fmtCount, cls: 'c2' },
+    { label: 'Loan Amt Paid',     key: `loan_amount_paid_${p}`,   fmt: fmtMoney, cls: 'c3' },
+    { label: 'Loans Paid',        key: `loans_paid_${p}`,         fmt: fmtCount, cls: 'c4' },
+    { label: 'Total Participants',key: 'total_participants',       fmt: fmtCount, cls: 'c5' },
   ];
 
-  grid.innerHTML = cards.map(c => `
-    <div class="kpi-card ${c.cls}">
-      <div class="kpi-label">${c.label}</div>
-      <div class="kpi-value">${c.val}</div>
-      <div class="kpi-sub">${periodLabel} · ${c.sub}</div>
-    </div>
-  `).join('');
+  grid.innerHTML = cards.map(c => {
+    const n   = num(c.key);
+    const val = n !== null ? c.fmt(n) : raw(c.key);
+    const isNA = val === 'N/A';
+    return `
+      <div class="kpi-card ${c.cls}">
+        <div class="kpi-label">${c.label}</div>
+        <div class="kpi-value${isNA ? ' na' : ''}">${isNA ? '—' : val}</div>
+        <div class="kpi-sub">Latest · ${periodNames[p]} view</div>
+      </div>`;
+  }).join('');
 }
 
-// ─── Charts ──────────────────────────────────────────────────────────────────
-const CHART_STYLE = {
+// ── Charts ────────────────────────────────────────────────────────────────────
+
+const CHART_DEFAULTS = {
   borderWidth: 2,
   pointRadius: 3,
   pointHoverRadius: 6,
@@ -594,16 +498,31 @@ const CHART_STYLE = {
 };
 
 function makeGradient(ctx, color) {
-  const g = ctx.createLinearGradient(0, 0, 0, 300);
-  g.addColorStop(0, color + '33');
+  const g = ctx.createLinearGradient(0, 0, 0, 280);
+  g.addColorStop(0, color + '40');
   g.addColorStop(1, color + '00');
   return g;
 }
 
-function renderChart(id, labels, datasets) {
-  const canvas = document.getElementById(id);
+const AXIS_OPTS = (isMoney) => ({
+  ticks: {
+    color: '#4a6278',
+    font: { family: 'DM Mono', size: 10 },
+    callback: isMoney
+      ? v => v >= 1e9 ? '$'+(v/1e9).toFixed(1)+'B'
+             : v >= 1e6 ? '$'+(v/1e6).toFixed(1)+'M'
+             : v >= 1e3 ? '$'+(v/1e3).toFixed(0)+'K'
+             : '$'+v
+      : v => v >= 1e6 ? (v/1e6).toFixed(1)+'M'
+             : v >= 1e3 ? (v/1e3).toFixed(0)+'K'
+             : v
+  },
+  grid: { color: '#1e2d3d' }
+});
+
+function buildChart(id, labels, datasets, isMoney = true) {
   if (charts[id]) charts[id].destroy();
-  const ctx = canvas.getContext('2d');
+  const ctx = document.getElementById(id).getContext('2d');
   charts[id] = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets },
@@ -612,11 +531,7 @@ function renderChart(id, labels, datasets) {
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
-          labels: {
-            color: '#4a6278',
-            font: { family: 'DM Mono', size: 11 },
-            boxWidth: 12,
-          }
+          labels: { color: '#4a6278', font: { family: 'DM Mono', size: 11 }, boxWidth: 12 }
         },
         tooltip: {
           backgroundColor: '#0e1419',
@@ -633,117 +548,118 @@ function renderChart(id, labels, datasets) {
           ticks: { color: '#4a6278', font: { family: 'DM Mono', size: 10 }, maxRotation: 45 },
           grid: { color: '#1e2d3d' }
         },
-        y: {
-          ticks: { color: '#4a6278', font: { family: 'DM Mono', size: 10 },
-            callback: v => v >= 1e9 ? '$'+(v/1e9).toFixed(1)+'B' : v >= 1e6 ? '$'+(v/1e6).toFixed(1)+'M' : v >= 1e3 ? '$'+(v/1e3).toFixed(0)+'K' : v
-          },
-          grid: { color: '#1e2d3d' }
-        }
+        y: AXIS_OPTS(isMoney)
       }
     }
   });
 }
 
-function renderCharts(filtered) {
-  const labels = filtered.map(r => {
-    const d = r.date;
-    if (d.startsWith('Wk ') || d.match(/^\d{4}-\d{2}$/)) return d;
-    return d.slice(5,10); // MM-DD
-  });
+function renderCharts() {
+  const sorted = [...allData].sort((a,b) => parseDate(a.date) - parseDate(b.date));
+  const labels = sorted.map(r => shortDate(r.date));
+  const p      = currentPeriod;
 
   // Chart 1: Loan Amount Funded
-  const view1 = chartViews.funded_amount;
-  const field1 = view1 === '24h' ? 'loan_amount_funded_24h' : 'loan_amount_funded_1w';
-  const color1 = '#00d4ff';
-  const vals1 = filtered.map(r => parseVal(r[field1]));
-  const ctx1 = document.getElementById('chartFundedAmount').getContext('2d');
-  renderChart('chartFundedAmount', labels, [{
-    label: `Loan Amount Funded (${view1})`,
-    data: vals1,
-    borderColor: color1,
-    backgroundColor: makeGradient(ctx1, color1),
-    ...CHART_STYLE
-  }]);
+  const ctx1 = document.getElementById('chartFunded').getContext('2d');
+  buildChart('chartFunded', labels, [{
+    label: `Loan Amount Funded (${p.toUpperCase()})`,
+    data: sorted.map(r => parseVal(r[`loan_amount_funded_${p}`])),
+    borderColor: '#00d4ff',
+    backgroundColor: makeGradient(ctx1, '#00d4ff'),
+    ...CHART_DEFAULTS
+  }], true);
 
-  // Chart 2: Loans Funded + Loans Paid counts
-  const view2 = chartViews.loan_counts;
-  const fField = view2 === '24h' ? 'loans_funded_24h' : 'loans_funded_1w';
-  const pField = view2 === '24h' ? 'loans_paid_24h' : 'loans_paid_24h';
-  const ctx2 = document.getElementById('chartLoanCounts').getContext('2d');
-  renderChart('chartLoanCounts', labels, [
+  // Chart 2: Loan Amount Paid
+  const ctx2 = document.getElementById('chartPaid').getContext('2d');
+  buildChart('chartPaid', labels, [{
+    label: `Loan Amount Paid (${p.toUpperCase()})`,
+    data: sorted.map(r => parseVal(r[`loan_amount_paid_${p}`])),
+    borderColor: '#ff9ef5',
+    backgroundColor: makeGradient(ctx2, '#ff9ef5'),
+    ...CHART_DEFAULTS
+  }], true);
+
+  // Chart 3: Counts (funded + paid)
+  const ctx3 = document.getElementById('chartCounts').getContext('2d');
+  buildChart('chartCounts', labels, [
     {
-      label: `Loans Funded (${view2})`,
-      data: filtered.map(r => parseVal(r[fField])),
+      label: `Loans Funded (${p.toUpperCase()})`,
+      data: sorted.map(r => parseVal(r[`loans_funded_${p}`])),
       borderColor: '#7b61ff',
-      backgroundColor: makeGradient(ctx2, '#7b61ff'),
-      ...CHART_STYLE
+      backgroundColor: makeGradient(ctx3, '#7b61ff'),
+      ...CHART_DEFAULTS
     },
     {
-      label: `Loans Paid (24h)`,
-      data: filtered.map(r => parseVal(r[pField])),
+      label: `Loans Paid (${p.toUpperCase()})`,
+      data: sorted.map(r => parseVal(r[`loans_paid_${p}`])),
       borderColor: '#00ff9d',
-      backgroundColor: makeGradient(ctx2, '#00ff9d'),
-      ...CHART_STYLE
+      backgroundColor: makeGradient(ctx3, '#00ff9d'),
+      ...CHART_DEFAULTS
     }
-  ]);
+  ], false);
 }
 
-// ─── Table ───────────────────────────────────────────────────────────────────
-function renderTable(filtered) {
+// ── Table ─────────────────────────────────────────────────────────────────────
+
+function renderTable() {
   const container = document.getElementById('tableContainer');
-  if (!filtered.length) {
+  if (!allData.length) {
     container.innerHTML = '<div class="state-msg"><span>No data</span></div>';
     return;
   }
 
-  const rows = [...filtered].reverse();
+  const sorted = [...allData].sort((a,b) => parseDate(b.date) - parseDate(a.date));
+  const p = currentPeriod;
+
+  const money = (v) => {
+    const n = parseVal(v);
+    return n !== null
+      ? `<span class="val-money">${fmtMoney(n)}</span>`
+      : `<span class="val-na">—</span>`;
+  };
+  const count = (v) => {
+    const n = parseVal(v);
+    return n !== null
+      ? `<span class="val-count">${fmtCount(n)}</span>`
+      : `<span class="val-na">—</span>`;
+  };
+
   container.innerHTML = `
     <table>
       <thead>
         <tr>
           <th>Date</th>
-          <th>Loan Amt Funded (24h)</th>
-          <th>Loans Funded (24h)</th>
-          <th>Loan Amt Funded (1W)</th>
-          <th>Loans Funded (1W)</th>
-          <th>Loan Amt Paid (24h)</th>
-          <th>Loans Paid (24h)</th>
+          <th>Loan Amt Funded</th>
+          <th>Loans Funded</th>
+          <th>Loan Amt Paid</th>
+          <th>Loans Paid</th>
           <th>Total Participants</th>
         </tr>
       </thead>
       <tbody>
-        ${rows.map(r => {
-          const cls = v => v === null ? 'val-na' : typeof v === 'string' && v.startsWith('$') ? 'val-money' : 'val-count';
-          const d = (f, fmt) => {
-            const v = parseVal(r[f]);
-            if (v === null) return '<span class="val-na">—</span>';
-            return `<span class="${cls(v)}">${fmt(v)}</span>`;
-          };
-          return `<tr>
-            <td>${r.date}</td>
-            <td>${d('loan_amount_funded_24h', fmtMoney)}</td>
-            <td>${d('loans_funded_24h', fmtCount)}</td>
-            <td>${d('loan_amount_funded_1w', fmtMoney)}</td>
-            <td>${d('loans_funded_1w', fmtCount)}</td>
-            <td>${d('loan_amount_paid_24h', fmtMoney)}</td>
-            <td>${d('loans_paid_24h', fmtCount)}</td>
-            <td>${d('total_participants', fmtCount)}</td>
-          </tr>`;
-        }).join('')}
+        ${sorted.map(r => `
+          <tr>
+            <td>${r.date.slice(0,10)}</td>
+            <td>${money(r[`loan_amount_funded_${p}`])}</td>
+            <td>${count(r[`loans_funded_${p}`])}</td>
+            <td>${money(r[`loan_amount_paid_${p}`])}</td>
+            <td>${count(r[`loans_paid_${p}`])}</td>
+            <td>${count(r.total_participants)}</td>
+          </tr>`).join('')}
       </tbody>
-    </table>
-  `;
+    </table>`;
 }
 
-// ─── Main render ─────────────────────────────────────────────────────────────
+// ── Render all ────────────────────────────────────────────────────────────────
+
 function render() {
-  const filtered = filterData(allData, currentPeriod);
-  renderKPIs(filtered);
-  renderCharts(filtered);
-  renderTable(filtered);
+  renderKPIs();
+  renderCharts();
+  renderTable();
 }
 
-// ─── Event listeners ─────────────────────────────────────────────────────────
+// ── Event listeners ───────────────────────────────────────────────────────────
+
 document.querySelectorAll('.period-tab').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
@@ -753,18 +669,8 @@ document.querySelectorAll('.period-tab').forEach(btn => {
   });
 });
 
-document.querySelectorAll('.metric-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const chart = btn.dataset.chart;
-    document.querySelectorAll(`.metric-btn[data-chart="${chart}"]`).forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    chartViews[chart] = btn.dataset.view;
-    const filtered = filterData(allData, currentPeriod);
-    renderCharts(filtered);
-  });
-});
+// ── Load data ─────────────────────────────────────────────────────────────────
 
-// ─── Load data ───────────────────────────────────────────────────────────────
 async function loadData() {
   try {
     const res = await fetch(DATA_URL + '?t=' + Date.now());
@@ -772,10 +678,11 @@ async function loadData() {
     allData = await res.json();
 
     if (allData.length) {
-      const latest = [...allData].sort((a,b) => parseDate(b.date) - parseDate(a.date))[0];
+      const latest = getLatest();
       document.getElementById('lastUpdated').innerHTML =
-        `Last updated<br><strong>${latest.date}</strong>`;
+        `Last updated<br><strong>${latest.date.slice(0,10)}</strong>`;
     }
+
     render();
   } catch(e) {
     document.getElementById('kpiGrid').innerHTML =
