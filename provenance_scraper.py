@@ -1,12 +1,11 @@
 """
 Provenance Blockchain Metrics Scraper
 Scrapes https://provenance.io/pulse daily at 11:55 PM ET.
-Writes to both data.json (for GitHub Pages website) and provenance_metrics.xlsx.
+Captures all 4 time periods: 24h, 1W, 1M, 3M.
+Writes to data.json (GitHub Pages) and provenance_metrics.xlsx.
 
-Fields captured:
-  24h: loan_amount_funded, loans_funded, loan_amount_paid, loans_paid
-  1W:  loan_amount_funded, loans_funded
-  All: total_participants
+Fields per period: loan_amount_funded, loans_funded, loan_amount_paid, loans_paid
+Plus: total_participants (from 1W view, it's a cumulative stat)
 """
 
 import asyncio
@@ -23,30 +22,85 @@ EXCEL_FILE = "provenance_metrics.xlsx"
 JSON_FILE  = "data.json"
 URL        = "https://provenance.io/pulse"
 
+# Tab definitions: (data_key_prefix, button_text, funded_label, loans_funded_label, paid_label, loans_paid_label)
+TABS = [
+    {
+        "prefix":         "1w",
+        "btn":            None,          # default view, no click needed
+        "funded_label":   "Week's Loan Amount Funded",
+        "funded_ct":      "Week's Loans Funded",
+        "paid_label":     "Week's Loan Amount Paid",
+        "paid_ct":        "Week's Loans Paid",
+    },
+    {
+        "prefix":         "24h",
+        "btn":            "24h",
+        "funded_label":   "Today's Loan Amount Funded",
+        "funded_ct":      "Today's Loans Funded",
+        "paid_label":     "Today's Loan Amount Paid",
+        "paid_ct":        "Today's Loans Paid",
+    },
+    {
+        "prefix":         "1m",
+        "btn":            "1m",
+        "funded_label":   "Month's Loan Amount Funded",
+        "funded_ct":      "Month's Loans Funded",
+        "paid_label":     "Month's Loan Amount Paid",
+        "paid_ct":        "Month's Loans Paid",
+    },
+    {
+        "prefix":         "3m",
+        "btn":            "3m",
+        "funded_label":   "Quarter's Loan Amount Funded",
+        "funded_ct":      "Quarter's Loans Funded",
+        "paid_label":     "Quarter's Loan Amount Paid",
+        "paid_ct":        "Quarter's Loans Paid",
+    },
+]
+
 HEADERS = [
     "Date",
-    "Loan Amt Funded (24h)", "Loans Funded (24h)",
-    "Loan Amt Funded (1W)",  "Loans Funded (1W)",
-    "Loan Amt Paid (24h)",   "Loans Paid (24h)",
+    # 24h
+    "Loan Amt Funded (24h)", "Loans Funded (24h)", "Loan Amt Paid (24h)", "Loans Paid (24h)",
+    # 1W
+    "Loan Amt Funded (1W)",  "Loans Funded (1W)",  "Loan Amt Paid (1W)",  "Loans Paid (1W)",
+    # 1M
+    "Loan Amt Funded (1M)",  "Loans Funded (1M)",  "Loan Amt Paid (1M)",  "Loans Paid (1M)",
+    # 3M
+    "Loan Amt Funded (3M)",  "Loans Funded (3M)",  "Loan Amt Paid (3M)",  "Loans Paid (3M)",
+    # All
     "Total Participants",
 ]
 
 
 def extract_from_text(text: str, label: str) -> str:
     """
-    Page text format per card:
+    Page card format:
         Label
-        i          ← tooltip icon line
-        $value     ← the value we want
+        i          ← tooltip icon
+        $value     ← what we want
         delta
         (pct%)
-        Week/Today
+        Period
     """
     lines = [l.strip() for l in text.split("\n") if l.strip()]
     for i, line in enumerate(lines):
         if line == label and i + 2 < len(lines):
             return lines[i + 2]
     return "N/A"
+
+
+async def click_tab(page, btn_text: str):
+    """Click the SECOND matching tab button (second section on the page)."""
+    try:
+        buttons = page.locator(f"button.pulse-pill:has-text('{btn_text}')")
+        count = await buttons.count()
+        print(f"  Found {count} '{btn_text}' button(s)")
+        await buttons.nth(1 if count >= 2 else 0).click()
+        await page.wait_for_timeout(3000)
+        print(f"  Clicked '{btn_text}' successfully")
+    except Exception as e:
+        print(f"  Could not click '{btn_text}': {e}")
 
 
 async def scrape_metrics():
@@ -64,43 +118,32 @@ async def scrape_metrics():
         await page.goto(URL, wait_until="networkidle", timeout=60000)
         await page.wait_for_timeout(4000)
 
-        # ── Scrape 1W (default view) ──────────────────────────────────────
-        print("Scraping 1W metrics...")
-        text_1w = await page.inner_text("body")
+        for tab in TABS:
+            prefix = tab["prefix"]
 
-        metrics["loan_amount_funded_1w"] = extract_from_text(text_1w, "Week's Loan Amount Funded")
-        metrics["loans_funded_1w"]        = extract_from_text(text_1w, "Week's Loans Funded")
-        metrics["total_participants"]     = extract_from_text(text_1w, "Total Participants")
+            # Click tab if needed (1W is default, no click)
+            if tab["btn"]:
+                print(f"\nSwitching to {prefix} tab...")
+                await click_tab(page, tab["btn"])
+            else:
+                print(f"\nScraping {prefix} (default view)...")
 
-        print(f"  1W Loan Amount Funded : {metrics['loan_amount_funded_1w']}")
-        print(f"  1W Loans Funded       : {metrics['loans_funded_1w']}")
-        print(f"  Total Participants    : {metrics['total_participants']}")
+            text = await page.inner_text("body")
 
-        # ── Click SECOND section's 24h tab ───────────────────────────────
-        print("Clicking 24h tab (second tab group)...")
-        try:
-            tab_buttons = page.locator("button.pulse-pill:has-text('24h')")
-            count = await tab_buttons.count()
-            print(f"  Found {count} '24h' tab button(s)")
-            await tab_buttons.nth(1 if count >= 2 else 0).click()
-            await page.wait_for_timeout(3000)
-            print("  Clicked successfully")
-        except Exception as e:
-            print(f"  Click failed: {e}")
+            metrics[f"loan_amount_funded_{prefix}"] = extract_from_text(text, tab["funded_label"])
+            metrics[f"loans_funded_{prefix}"]        = extract_from_text(text, tab["funded_ct"])
+            metrics[f"loan_amount_paid_{prefix}"]    = extract_from_text(text, tab["paid_label"])
+            metrics[f"loans_paid_{prefix}"]          = extract_from_text(text, tab["paid_ct"])
 
-        # ── Scrape 24h ────────────────────────────────────────────────────
-        print("Scraping 24h metrics...")
-        text_24h = await page.inner_text("body")
+            print(f"  Loan Amount Funded : {metrics[f'loan_amount_funded_{prefix}']}")
+            print(f"  Loans Funded       : {metrics[f'loans_funded_{prefix}']}")
+            print(f"  Loan Amount Paid   : {metrics[f'loan_amount_paid_{prefix}']}")
+            print(f"  Loans Paid         : {metrics[f'loans_paid_{prefix}']}")
 
-        metrics["loan_amount_funded_24h"] = extract_from_text(text_24h, "Today's Loan Amount Funded")
-        metrics["loans_funded_24h"]        = extract_from_text(text_24h, "Today's Loans Funded")
-        metrics["loan_amount_paid_24h"]    = extract_from_text(text_24h, "Today's Loan Amount Paid")
-        metrics["loans_paid_24h"]          = extract_from_text(text_24h, "Today's Loans Paid")
-
-        print(f"  24h Loan Amount Funded : {metrics['loan_amount_funded_24h']}")
-        print(f"  24h Loans Funded       : {metrics['loans_funded_24h']}")
-        print(f"  24h Loan Amount Paid   : {metrics['loan_amount_paid_24h']}")
-        print(f"  24h Loans Paid         : {metrics['loans_paid_24h']}")
+            # Grab total_participants from 1W view (cumulative, stable)
+            if prefix == "1w":
+                metrics["total_participants"] = extract_from_text(text, "Total Participants")
+                print(f"  Total Participants : {metrics['total_participants']}")
 
         await browser.close()
 
@@ -118,12 +161,11 @@ def update_json(date_str: str, metrics: dict):
             except json.JSONDecodeError:
                 data = []
 
-    entry = {"date": date_str, **metrics}
-    data.append(entry)
+    data.append({"date": date_str, **metrics})
 
     with open(JSON_FILE, "w") as f:
         json.dump(data, f, indent=2)
-    print(f"data.json updated ({len(data)} total records)")
+    print(f"\ndata.json updated ({len(data)} total records)")
 
 
 # ── Excel ─────────────────────────────────────────────────────────────────────
@@ -149,9 +191,8 @@ def setup_workbook():
         cell.alignment = center_align
         cell.border    = thin_border
 
-    col_widths = [24, 24, 20, 24, 20, 22, 18, 22]
-    for i, w in enumerate(col_widths, start=1):
-        ws.column_dimensions[get_column_letter(i)].width = w
+    for i in range(1, len(HEADERS) + 1):
+        ws.column_dimensions[get_column_letter(i)].width = 24
 
     ws.row_dimensions[1].height = 30
     ws.freeze_panes = "A2"
@@ -168,18 +209,19 @@ def append_excel_row(date_str: str, metrics: dict):
 
     row_data = [
         date_str,
-        metrics.get("loan_amount_funded_24h", "N/A"),
-        metrics.get("loans_funded_24h",        "N/A"),
-        metrics.get("loan_amount_funded_1w",  "N/A"),
-        metrics.get("loans_funded_1w",         "N/A"),
-        metrics.get("loan_amount_paid_24h",    "N/A"),
-        metrics.get("loans_paid_24h",          "N/A"),
-        metrics.get("total_participants",      "N/A"),
+        metrics.get("loan_amount_funded_24h", "N/A"), metrics.get("loans_funded_24h",        "N/A"),
+        metrics.get("loan_amount_paid_24h",   "N/A"), metrics.get("loans_paid_24h",           "N/A"),
+        metrics.get("loan_amount_funded_1w",  "N/A"), metrics.get("loans_funded_1w",          "N/A"),
+        metrics.get("loan_amount_paid_1w",    "N/A"), metrics.get("loans_paid_1w",            "N/A"),
+        metrics.get("loan_amount_funded_1m",  "N/A"), metrics.get("loans_funded_1m",          "N/A"),
+        metrics.get("loan_amount_paid_1m",    "N/A"), metrics.get("loans_paid_1m",            "N/A"),
+        metrics.get("loan_amount_funded_3m",  "N/A"), metrics.get("loans_funded_3m",          "N/A"),
+        metrics.get("loan_amount_paid_3m",    "N/A"), metrics.get("loans_paid_3m",            "N/A"),
+        metrics.get("total_participants",     "N/A"),
     ]
 
     next_row     = ws.max_row + 1
-    fill_color   = "D6E4F0" if next_row % 2 == 0 else "FFFFFF"
-    fill         = PatternFill("solid", start_color=fill_color)
+    fill         = PatternFill("solid", start_color="D6E4F0" if next_row % 2 == 0 else "FFFFFF")
     thin_border  = Border(
         left=Side(style="thin"), right=Side(style="thin"),
         top=Side(style="thin"),  bottom=Side(style="thin")
@@ -195,21 +237,21 @@ def append_excel_row(date_str: str, metrics: dict):
         cell.alignment = center_align
 
     wb.save(EXCEL_FILE)
-    print(f"Excel row {next_row} saved: {row_data}")
+    print(f"Excel row {next_row} saved.")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 async def main():
-    et      = pytz.timezone("America/New_York")
-    now_et  = datetime.now(et)
+    et       = pytz.timezone("America/New_York")
+    now_et   = datetime.now(et)
     date_str = now_et.strftime("%Y-%m-%d %I:%M %p ET")
 
     print(f"Starting scrape at {date_str}")
     metrics = await scrape_metrics()
     update_json(date_str, metrics)
     append_excel_row(date_str, metrics)
-    print("Done.")
+    print("All done.")
 
 
 if __name__ == "__main__":
