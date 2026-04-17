@@ -1,8 +1,8 @@
 name: DEBUG Provenance Scraper
- 
+
 on:
   workflow_dispatch:
- 
+
 jobs:
   debug:
     runs-on: ubuntu-latest
