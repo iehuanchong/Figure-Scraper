@@ -578,5 +578,25 @@
     "loans_funded_3m": "33,703",
     "loan_amount_paid_3m": "$984,227,086",
     "loans_paid_3m": "536,966"
+  },
+  {
+    "date": "2026-04-22 02:09 AM ET",
+    "loan_amount_funded_1w": "$294.16M",
+    "loans_funded_1w": "3,011",
+    "loan_amount_paid_1w": "$83,670,833",
+    "loans_paid_1w": "47,578",
+    "total_participants": "74,724",
+    "loan_amount_funded_24h": "$48.98M",
+    "loans_funded_24h": "532",
+    "loan_amount_paid_24h": "$494,539",
+    "loans_paid_24h": "146",
+    "loan_amount_funded_1m": "$1.25B",
+    "loans_funded_1m": "12,922",
+    "loan_amount_paid_1m": "$370,820,112",
+    "loans_paid_1m": "189,806",
+    "loan_amount_funded_3m": "$3.32B",
+    "loans_funded_3m": "33,942",
+    "loan_amount_paid_3m": "$978,818,918",
+    "loans_paid_3m": "542,865"
   }
 ]
